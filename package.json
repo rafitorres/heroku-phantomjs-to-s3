@@ -1,0 +1,22 @@
+{
+  "name": "heroku-phantomjs-to-s3",
+  "version": "0.0.1",
+  "description": "Web Service to render webpage screenshots",
+  "main": "web.js",
+  "dependencies": {
+    "express": "3.1.1",
+    "guid": "0.0.10",
+    "s3": "0.1.0"
+  },
+  "engines": {
+    "node": "0.10.3",
+    "npm": "1.2.18"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": "",
+  "author": "Rafael Torres",
+  "license": "BSD"
+}

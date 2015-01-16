@@ -10,6 +10,12 @@ app.use(express.bodyParser());
 
 
 app.post('/screenshot', function(request, response) {
+  if(process.env.PASSCODE){
+    if (!request.body.passcode || request.body.passcode != process.env.PASSCODE){
+      return response.json(401, { 'unauthorized': ' _|_ ' })
+    }
+  }
+
   if(!request.body.address) {
     return response.json(400, { 'error': 'You need to provide the website address.' });
   }

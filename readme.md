@@ -5,6 +5,12 @@ This node.js web service takes a PNG screenshot of the specified URL and uploads
 
 Unlike similar packages, this one does not require separate Node/PhantomJS servers. Instead it spawns PhantomJS as a child process.
 
+## Usage
+
+Make a `post` request to `/screenshot` with the following params:
+  - `address` Make sure to include `http://`
+  - `size` Can be any size (w x h), eg: `600px*800px`, `1080px*720px`
+
 ## How to deploy to Heroku:
 
 Create app and push:

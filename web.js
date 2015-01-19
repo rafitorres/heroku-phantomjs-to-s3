@@ -8,11 +8,10 @@ var s3 = new AWS.S3({region: process.env.AWS_REGION});
 var app = express();
 app.use(express.bodyParser());
 
-
 app.post('/screenshot', function(request, response) {
   if(process.env.PASSCODE){
-    if (!request.body.passcode || request.body.passcode != process.env.PASSCODE){
-      return response.json(401, { 'unauthorized': ' _|_ ' })
+    if(!request.body.passcode || request.body.passcode != process.env.PASSCODE){
+      return response.json(401, { 'unauthorized': ' _|_ ' });
     }
   }
 
@@ -24,7 +23,7 @@ app.post('/screenshot', function(request, response) {
   var filenameFull = './images/' + filename;
   var childArgs = [
     'rasterize.js',
-    request.body.address,
+    format(request.body.address),
     filenameFull,
     request.body.size? request.body.size : '',
   ];
@@ -72,3 +71,9 @@ var port = process.env.PORT || 5000;
 app.listen(port, function() {
   console.log("Listening on " + port);
 });
+
+var format = function(url){
+  if( url.indexOf("http") > -1 )
+    return url;
+  else return "http://" + url;
+}

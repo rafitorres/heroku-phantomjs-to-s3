@@ -61,7 +61,7 @@ app.post('/screenshot', function(request, response) {
               
               if (request.body.redirect == 'true') {
                 return response.redirect(302, s3Url);
-              else {
+              } else {
                 return response.json(200, { 'url': s3Url });
               }
             }

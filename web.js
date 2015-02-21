@@ -55,7 +55,8 @@ app.post('/screenshot', function(request, response) {
             }else{
               //clean up and respond
               fs.unlink(filenameFull, function(err){}); //delete local file
-              var s3Url = 'https://s3-' + process.env.AWS_REGION + ".amazonaws.com/" + process.env.AWS_BUCKET_NAME +
+              var s3Region = process.env.AWS_REGION? 's3-' + process.env.AWS_REGION : 's3'
+              var s3Url = 'https://' + s3Region + ".amazonaws.com/" + process.env.AWS_BUCKET_NAME +
               '/' + upload_params.Key;
               return response.json(200, { 'url': s3Url });
             }

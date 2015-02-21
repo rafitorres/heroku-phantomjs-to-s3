@@ -26,6 +26,7 @@ app.post('/screenshot', function(request, response) {
     format(request.body.address),
     filenameFull,
     request.body.size? request.body.size : '',
+    request.body.zoom? request.body.zoom : 1
   ];
 
   //grap the screen

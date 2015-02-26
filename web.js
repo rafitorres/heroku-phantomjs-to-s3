@@ -51,7 +51,7 @@ app.post('/screenshot', function(request, response) {
             Key: guid.raw() + ".png",
             ACL: "public-read",
             Bucket: process.env.AWS_BUCKET_NAME
-          }
+          };
           //start uploading
           s3.putObject(upload_params, function(err, s3_data) {
             if(err!=null){
@@ -63,7 +63,7 @@ app.post('/screenshot', function(request, response) {
               var s3Region = process.env.AWS_REGION? 's3-' + process.env.AWS_REGION : 's3'
               var s3Url = 'https://' + s3Region + ".amazonaws.com/" + process.env.AWS_BUCKET_NAME +
               '/' + upload_params.Key;
-              
+
               if (request.body.redirect == 'true') {
                 return response.redirect(302, s3Url);
               } else {
@@ -83,8 +83,9 @@ app.listen(port, function() {
   console.log("Listening on " + port);
 });
 
-var format = function(url){
+function format(url){
   if( url.indexOf("http") > -1 )
     return url;
-  else return "http://" + url;
+  else
+    return "http://" + url;
 }

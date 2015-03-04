@@ -8,6 +8,10 @@ var s3 = new AWS.S3({region: process.env.AWS_REGION});
 var app = express();
 app.use(express.bodyParser());
 
+app.get('/', function(req, res){
+  res.send('<html><head><title>Screenshots!</title></head><body><h1>Screenshots!</h1><form action="/screenshot" method="POST">URL: <input name="address" value="" placeholder="http://"><br>Size:<input name="size" value="" placeholder="1024px or 1024px*1000px"><br>Zoom factor:<input name="zoom" value="1"><br><input type="hidden" name="redirect" value="true"><input type="submit" value="Get Screenshot!"></form></body></html>');
+});
+
 app.post('/screenshot', function(request, response) {
   if(process.env.PASSCODE){
     if(!request.body.passcode || request.body.passcode != process.env.PASSCODE){
@@ -26,6 +30,7 @@ app.post('/screenshot', function(request, response) {
     format(request.body.address),
     filenameFull,
     request.body.size? request.body.size : '',
+    request.body.zoom? request.body.zoom : 1
   ];
 
   //grap the screen
@@ -46,7 +51,7 @@ app.post('/screenshot', function(request, response) {
             Key: guid.raw() + ".png",
             ACL: "public-read",
             Bucket: process.env.AWS_BUCKET_NAME
-          }
+          };
           //start uploading
           s3.putObject(upload_params, function(err, s3_data) {
             if(err!=null){
@@ -55,9 +60,15 @@ app.post('/screenshot', function(request, response) {
             }else{
               //clean up and respond
               fs.unlink(filenameFull, function(err){}); //delete local file
-              var s3Url = 'https://s3-' + process.env.AWS_REGION + ".amazonaws.com/" + process.env.AWS_BUCKET_NAME +
+              var s3Region = process.env.AWS_REGION? 's3-' + process.env.AWS_REGION : 's3'
+              var s3Url = 'https://' + s3Region + ".amazonaws.com/" + process.env.AWS_BUCKET_NAME +
               '/' + upload_params.Key;
-              return response.json(200, { 'url': s3Url });
+
+              if (request.body.redirect == 'true') {
+                return response.redirect(302, s3Url);
+              } else {
+                return response.json(200, { 'url': s3Url });
+              }
             }
           });
         }
@@ -72,8 +83,9 @@ app.listen(port, function() {
   console.log("Listening on " + port);
 });
 
-var format = function(url){
+function format(url){
   if( url.indexOf("http") > -1 )
     return url;
-  else return "http://" + url;
+  else
+    return "http://" + url;
 }

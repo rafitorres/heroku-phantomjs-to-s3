@@ -6,7 +6,8 @@
   "dependencies": {
     "express": "3.1.1",
     "guid": "0.0.10",
-    "aws-sdk": "2.1.6"
+    "aws-sdk": "2.1.6",
+    "dotenv": "^2.0.0"
   },
   "engines": {
     "node": "0.10.3",

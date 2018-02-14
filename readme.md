@@ -38,3 +38,12 @@ Set NODE_ENV as recommended by Heroku:
 Scale as needed:
 
     $ heroku ps:scale web=<number_of_desired_dynos>
+
+
+## Added by Pete
+Heorku buildpacks: [Read here](https://devcenter.heroku.com/articles/using-multiple-buildpacks-for-an-app)
+
+Buildpacks added:
+
+    $ heroku buildpacks:add heroku/nodejs
+    $ heroku buildpacks:add --index 1 https://github.com/stomita/heroku-buildpack-phantomjs

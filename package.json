@@ -4,10 +4,11 @@
   "description": "Web Service to render webpage screenshots",
   "main": "web.js",
   "dependencies": {
+    "aws-sdk": "2.1.6",
+    "dotenv": "^2.0.0",
     "express": "3.1.1",
     "guid": "0.0.10",
-    "aws-sdk": "2.1.6",
-    "dotenv": "^2.0.0"
+    "rollbar": "^2.3.8"
   },
   "engines": {
     "node": "0.10.3",

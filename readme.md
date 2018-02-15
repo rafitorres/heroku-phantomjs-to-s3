@@ -47,3 +47,18 @@ Buildpacks added:
 
     $ heroku buildpacks:add heroku/nodejs
     $ heroku buildpacks:add --index 1 https://github.com/stomita/heroku-buildpack-phantomjs
+
+### Versioning
+For a later date: [API versioning](http://j-query.blogspot.co.uk/2013/01/versioned-apis-with-express.html)
+
+
+### API
+    $ curl --request POST \
+      --url http://localhost:8000/v1/render \
+      --header 'content-type: application/x-www-form-urlencoded' \
+      --data 'canvas_url=http%3A%2F%2Flocalhost%3A5000%2Fprints%2F5182&size=500*1000px&access_token=969CukLEsir3k8F7gBM&format=png&filename=pete-roome&aws_directory=render%2Fuser-1'
+
+
+### TODO
+
+- Add format quality as param for API

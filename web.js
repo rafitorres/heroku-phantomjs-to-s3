@@ -13,37 +13,61 @@ var fs = require('fs');
 var s3 = new AWS.S3({region: process.env.AWS_REGION});
 
 var app = express();
+var formats = ['jpg', 'png'];
+
 app.use(express.bodyParser());
 app.use(rollbar.errorHandler());
 
 app.get('/', function(req, res){
-  res.send('<html><head><title>Screenshots!</title></head><body><h1>Screenshots!</h1><form action="/screenshot" method="POST">URL: <input name="address" value="" placeholder="http://"><br>Size:<input name="size" value="" placeholder="1024px or 1024px*1000px"><br>Zoom factor:<input name="zoom" value="1"><br><input type="hidden" name="redirect" value="true"><input type="submit" value="Get Screenshot!"></form></body></html>');
+  res.send('<html><head><title>Screenshots!</title></head><body><h1>Screenshots!</h1><form action="/render" method="POST">URL: <input name="canvas_url" value="" placeholder="http://"><br>Size:<input name="size" value="" placeholder="1024px or 1024px*1000px"><br><input type="hidden" name="redirect" value="true"><input type="submit" value="Get Screenshot!"></form></body></html>');
 });
 
-app.post('/screenshot', function(request, response) {
-  if(process.env.PASSCODE){
-    if(!request.body.passcode || request.body.passcode != process.env.PASSCODE){
+app.post('/v1/render', function(request, response) {
+  if(process.env.SISU_RENDERER_ACCESS_TOKEN){
+    if(!request.body.access_token || request.body.access_token != process.env.SISU_RENDERER_ACCESS_TOKEN){
       return response.json(401, { 'unauthorized': ' _|_ ' });
     }
   }
 
-  if(!request.body.address) {
-    return response.json(400, { 'error': 'You need to provide the website address.' });
+  var format = request.body.format;
+  if (formats.indexOf(format) === -1){
+    return response.json(500, {
+      'error': 'call /render/[format] where format is either jpg or png'
+    });
   }
 
-  var filename = guid.raw() + '.png';
-  var filenameFull = './images/' + filename;
+  if(!request.body.canvas_url) {
+    return response.json(400, { 'error': 'You need to provide the print url.' });
+  }
+
+  // Not a well formatted print URL
+  if(request.body.canvas_url.indexOf("http") < 0){
+    return response.json(500, {
+      'error': 'The URL does not contain http of any sort.'
+    });
+  }
+
+  if(!request.body.filename) {
+    return response.json(400, { 'error': 'You need to provide a filename.' });
+  }
+
+  if(!request.body.aws_directory) {
+    return response.json(400, { 'error': 'You need to provide an AWS location for the print.' });
+  }
+
+  var filename = request.body.filename + "." + format;
+  var filenameFull = "./" + request.body.aws_directory + "/" + filename;
   var childArgs = [
     'rasterize.js',
-    format(request.body.address),
+    request.body.canvas_url,
     filenameFull,
     request.body.size? request.body.size : '',
-    request.body.zoom? request.body.zoom : 1
+    request.body.format? request.body.format : 'jpg'
   ];
 
   //grap the screen
   childProcess.execFile('phantomjs', childArgs, function(error, stdout, stderr){
-    console.log("Grabbing screen for: " + request.body.address);
+    console.log("Grabbing screen for: " + request.body.canvas_url);
 
     if(error !== null) {
       console.log("Error capturing page: " + error.message + "\n for address: " + childArgs[1]);
@@ -61,7 +85,7 @@ app.post('/screenshot', function(request, response) {
         }else{
           upload_params = {
             Body: temp_png_data,
-            Key: guid.raw() + ".png",
+            Key: request.body.aws_directory + "/" + filename,
             ACL: "public-read",
             Bucket: process.env.AWS_BUCKET_NAME
           };
@@ -71,7 +95,9 @@ app.post('/screenshot', function(request, response) {
               console.log("Error uploading to s3: " + err.message);
               rollbar.error("Error uploading to s3: " + err.message);
 
-              return response.json(500, { 'error': 'Problem uploading to S3.' + err.message });
+              return response.json(500, {
+                'error': 'Problem uploading to S3.' + err.message
+              });
             } else {
               //clean up and respond
               fs.unlink(filenameFull, function(err){}); //delete local file
@@ -81,7 +107,9 @@ app.post('/screenshot', function(request, response) {
               if (request.body.redirect == 'true') {
                 return response.redirect(302, s3Url);
               } else {
-                return response.json(200, { 'url': s3Url });
+                return response.json(200, {
+                  'url': s3Url
+                });
               }
             }
           });
@@ -96,10 +124,3 @@ var port = process.env.PORT || 8000;
 app.listen(port, function() {
   console.log("Listening on " + port);
 });
-
-function format(url){
-  if( url.indexOf("http") > -1 )
-    return url;
-  else
-    return "http://" + url;
-}

@@ -11,7 +11,9 @@ if (system.args.length < 3 || system.args.length > 5) {
   address = system.args[1];
   output = system.args[2];
   format = system.args[4];
-  page.viewportSize = { width: 600, height: 600 };
+
+  page.viewportSize = { width: 3508, height: 4961 };
+
   if (system.args[3].substr(-2) === "px") {
     size = system.args[3].split('*');
     if (size.length === 2) {

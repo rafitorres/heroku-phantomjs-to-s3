@@ -68,6 +68,8 @@ app.post('/v1/render', function(request, response) {
   //grap the screen
   childProcess.execFile('phantomjs', childArgs, function(error, stdout, stderr){
     console.log("Grabbing screen for: " + request.body.canvas_url);
+    console.log('stdout: ', stdout);
+    console.log('stderr: ', stderr);
 
     if(error !== null) {
       console.log("Error capturing page: " + error.message + "\n for address: " + childArgs[1]);
@@ -82,7 +84,7 @@ app.post('/v1/render', function(request, response) {
           rollbar.error("Error loading saved screenshot: " + err.message);
 
           return response.json(500, { 'error': 'Problem loading saved page.' });
-        }else{
+        } else {
           upload_params = {
             Body: temp_png_data,
             Key: request.body.aws_directory + "/" + filename,

@@ -27,6 +27,7 @@ if (system.args.length < 3 || system.args.length > 5) {
   }
 
   var renderAndExit = function(){
+    console.log("Rendering");
     page.render(output, {
       format: format,
       quality: '100'
@@ -34,18 +35,26 @@ if (system.args.length < 3 || system.args.length > 5) {
     phantom.exit();
   }
 
+  page.onConsoleMessage = function(msg, lineNum, sourceId) {
+    console.log('CONSOLE 1: ' + msg);
+    if(msg == "Page loaded"){
+      console.log("The page loaded - Time to render");
+      renderAndExit();
+    }
+  };
+
   page.open(address, function (status) {
     if (status !== 'success') {
       console.log('Unable to load the address!');
       phantom.exit();
     } else {
-      if(window.document.readyState == "complete"){
-        renderAndExit()
-      } else {
-        window.addEventListener ?
-        window.addEventListener("load", renderAndExit, false) :
-        window.attachEvent && window.attachEvent("onload", renderAndExit);
-      }
+      // if(window.document.readyState == "complete"){
+      //   renderAndExit()
+      // } else {
+      //   window.addEventListener ?
+      //   window.addEventListener("load", renderAndExit, false) :
+      //   window.attachEvent && window.attachEvent("onload", renderAndExit);
+      // }
     }
   });
 }

@@ -10,6 +10,7 @@ var childProcess = require('child_process');
 var guid = require('guid');
 var AWS = require('aws-sdk');
 var fs = require('fs');
+var rimraf = require('rimraf');
 var s3 = new AWS.S3({region: process.env.AWS_REGION});
 
 var app = express();
@@ -56,6 +57,7 @@ app.post('/v1/render', function(request, response) {
   }
 
   var filename = request.body.filename + "." + file_type;
+  var parent_dir = "./" + request.body.aws_directory.split("/")[0];
   var filenameFull = "./" + request.body.aws_directory + "/" + filename;
   var childArgs = [
     'rasterize.js',
@@ -108,7 +110,10 @@ app.post('/v1/render', function(request, response) {
             });
           } else {
             //clean up and respond
-            fs.unlink(filenameFull, function(err){}); //delete local file
+            rimraf(parent_dir, function () {
+              console.log(new Date().toISOString(), ': Done');
+            });
+
             var s3Region = process.env.AWS_REGION? 's3-' + process.env.AWS_REGION : 's3'
             var s3Url = 'https://' + process.env.AWS_BUCKET_NAME + '.' + s3Region + ".amazonaws.com/" + upload_params.Key;
 

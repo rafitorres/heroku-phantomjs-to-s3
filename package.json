@@ -20,6 +20,6 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": "",
-  "author": "Rafael Torres",
+  "author": "Peter Roome",
   "license": "BSD"
 }

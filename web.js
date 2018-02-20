@@ -11,10 +11,12 @@ var guid = require('guid');
 var AWS = require('aws-sdk');
 var fs = require('fs');
 var rimraf = require('rimraf');
+
 var s3 = new AWS.S3({region: process.env.AWS_REGION});
+var file_types = ['jpg', 'png'];
 
 var app = express();
-var file_types = ['jpg', 'png'];
+
 
 app.use(express.bodyParser());
 app.use(rollbar.errorHandler());

@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 var express = require('express');
+const sisuClient = require('./sisu_api/client');
 
 // Bug tracking
 var Rollbar = require('rollbar');
@@ -10,6 +11,7 @@ var childProcess = require('child_process');
 var guid = require('guid');
 var AWS = require('aws-sdk');
 var fs = require('fs');
+var apiRequest = require("request");
 var rimraf = require('rimraf');
 
 var s3 = new AWS.S3({region: process.env.AWS_REGION});
@@ -22,7 +24,7 @@ app.use(express.bodyParser());
 app.use(rollbar.errorHandler());
 
 app.get('/', function(req, res){
-  res.send('<html><head><title>Screenshots!</title></head><body><h1>Screenshots!</h1><form action="/render" method="POST">URL: <input name="canvas_url" value="" placeholder="http://"><br>Size:<input name="size" value="" placeholder="1024px or 1024px*1000px"><br><input type="hidden" name="redirect" value="true"><input type="submit" value="Get Screenshot!"></form></body></html>');
+  res.send('<html><head><title>Screenshots!</title></head><body><h1>Screenshots!</h1><form action="/render" method="POST">URL: <input name="order_id" value="" placeholder="http://"><br>Size:<input name="size" value="" placeholder="1024px or 1024px*1000px"><br><input type="hidden" name="redirect" value="true"><input type="submit" value="Get Screenshot!"></form></body></html>');
 });
 
 app.post('/v1/render', function(request, response) {
@@ -39,17 +41,6 @@ app.post('/v1/render', function(request, response) {
     });
   }
 
-  if(!request.body.canvas_url) {
-    return response.json(400, { 'error': 'You need to provide the print url.' });
-  }
-
-  // Not a well formatted print URL
-  if(request.body.canvas_url.indexOf("http") < 0){
-    return response.json(500, {
-      'error': 'The URL does not contain http of any sort.'
-    });
-  }
-
   if(!request.body.filename) {
     return response.json(400, { 'error': 'You need to provide a filename.' });
   }
@@ -58,32 +49,29 @@ app.post('/v1/render', function(request, response) {
     return response.json(400, { 'error': 'You need to provide an AWS location for the print.' });
   }
 
+  if(!request.body.order_id) {
+    return response.json(400, { 'error': 'You need to provide an order id.' });
+  }
+
+  // Respond as quickly as possible
+  // to say we're handling this request
+  response.json(200, {
+    'status': "OK"
+  });
+
   var filename = request.body.filename + "." + file_type;
   var parent_dir = "./" + request.body.aws_directory.split("/")[0];
   var filenameFull = "./" + request.body.aws_directory + "/" + filename;
+  var canvas_url = process.env.SISU_API_URL + "/render/prints/" + request.body.order_id;
   var childArgs = [
     'rasterize.js',
-    request.body.canvas_url,
+    canvas_url,
     filenameFull,
     request.body.size? request.body.size : '',
     request.body.file_type? request.body.file_type : 'jpg'
   ];
 
-  //grap the screen
-  var phantomProcess = childProcess.spawn('phantomjs', childArgs, { stdio: 'inherit' });
-
-  phantomProcess.on('error', function(code) {
-    console.log(new Date().toISOString(), "Error capturing page: " + error.message + "\n for address: " + childArgs[1]);
-    rollbar.error(new Date().toISOString(), "Error capturing page: " + error.message + "\n for address: " + childArgs[1]);
-
-    return response.json(500, {
-      'error': 'Problem capturing page.'
-    });
-  });
-
-  phantomProcess.on('exit', function(code) {
-    console.log(new Date().toISOString(), ': Phantom process exited with code ' + code.toString())
-    //load the saved file
+  var uploadToS3 = function(){
     fs.readFile(filenameFull, function(err, temp_png_data){
       if(err != null){
         console.log(new Date().toISOString(), ": Error loading saved screenshot: " + err.message);
@@ -121,17 +109,38 @@ app.post('/v1/render', function(request, response) {
 
             console.log(new Date().toISOString(), ": Uploaded to s3!");
             console.log(new Date().toISOString(), ": URL => ", s3Url);
+
+            // Upload complete
             if (request.body.redirect == 'true') {
               return response.redirect(302, s3Url);
             } else {
-              return response.json(200, {
-                'url': s3Url
+              // Send a request back to Sisu.
+              sisuClient.sisuOrderPut(request.body.order_id, {
+                print_url: s3Url
               });
             }
           }
         });
       }
     });
+  }
+
+  //grap the screen
+  var phantomProcess = childProcess.spawn('phantomjs', childArgs, { stdio: 'inherit' });
+
+  phantomProcess.on('error', function(code) {
+    console.log(new Date().toISOString(), "Error capturing page: " + error.message + "\n for address: " + childArgs[1]);
+    rollbar.error(new Date().toISOString(), "Error capturing page: " + error.message + "\n for address: " + childArgs[1]);
+
+    return response.json(500, {
+      'error': 'Problem capturing page.'
+    });
+  });
+
+  phantomProcess.on('exit', function(code) {
+    console.log(new Date().toISOString(), ': Phantom process exited with code ' + code.toString())
+    //load the saved file
+    uploadToS3();
   });
 });
 

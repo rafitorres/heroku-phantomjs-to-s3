@@ -1,7 +1,7 @@
 require('dotenv').config({silent: true});
 
 var express = require('express');
-const sisuClient = require('./sisu_api/client');
+var sisuClient = require('./sisu_api/client');
 
 // Bug tracking
 var Rollbar = require('rollbar');

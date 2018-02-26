@@ -42,7 +42,7 @@ if (system.args.length < 3 || system.args.length > 5) {
     // This releases the page memory
     // Ensures garbage collection
     // Docs: http://phantomjs.org/api/webpage/method/close.html
-    // page.close();
+    page.close();
     phantom.exit();
   }
 

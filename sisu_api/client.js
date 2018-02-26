@@ -8,6 +8,10 @@
  */
 var apiRequest = require("request");
 
+// Bug tracking
+// var Rollbar = require('rollbar');
+// var rollbar = new Rollbar(process.env.ROLLBAR_ACCESS_TOKEN);
+
 function sisuOrderPut(order_id, params = {}) {
   var api_url = process.env.SISU_API_URL + "/api/orders/" + order_id + ".json";
 

@@ -62,6 +62,7 @@ app.post('/v1/render', function(request, response) {
   var filename = request.body.filename + "." + file_type;
   var parent_dir = "./" + request.body.aws_directory.split("/")[0];
   var filenameFull = "./" + request.body.aws_directory + "/" + filename;
+  console.log(new Date().toISOString(), ": Filename -> ", filenameFull);
   var canvas_url = process.env.SISU_API_URL + "/render/prints/" + request.body.order_id;
   var childArgs = [
     'rasterize.js',
@@ -81,7 +82,7 @@ app.post('/v1/render', function(request, response) {
           'error': 'Problem loading saved page.'
         });
       } else {
-        console.log(new Date().toISOString(), ": Uploading to s3");
+        console.log(new Date().toISOString(), ": Uploading to s3 (#" + request.body.order_id + ")");
 
         upload_params = {
           Body: temp_png_data,
@@ -89,8 +90,10 @@ app.post('/v1/render', function(request, response) {
           ACL: "public-read",
           Bucket: process.env.AWS_BUCKET_NAME
         };
+
         //start uploading
         s3.putObject(upload_params, function(err, s3_data) {
+          console.log(new Date().toISOString(), ": S3 (#" + request.body.order_id + "): ", err);
           if(err != null){
             console.log(new Date().toISOString(), ": Error uploading to s3: " + err.message);
             rollbar.error(new Date().toISOString(), ": Error uploading to s3: " + err.message);

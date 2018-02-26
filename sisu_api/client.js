@@ -12,7 +12,7 @@ var apiRequest = require("request");
 // var Rollbar = require('rollbar');
 // var rollbar = new Rollbar(process.env.ROLLBAR_ACCESS_TOKEN);
 
-function sisuOrderPut(order_id, params = {}) {
+function sisuOrderPut(order_id, params) {
   var api_url = process.env.SISU_API_URL + "/api/orders/" + order_id + ".json";
 
   console.log(new Date().toISOString(), ": Posting to Sisu API.");
@@ -21,7 +21,7 @@ function sisuOrderPut(order_id, params = {}) {
       'auth': {
         'bearer': process.env.SISU_API_TOKEN
       },
-      form: params
+      form: params || {}
     })
     .on('response', function(response) {
       console.log(new Date().toISOString(), ": Sisu API - Response");

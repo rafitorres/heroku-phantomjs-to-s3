@@ -4,8 +4,14 @@ var express = require('express');
 var sisuClient = require('./sisu_api/client');
 
 // Bug tracking
-var Rollbar = require('rollbar');
-var rollbar = new Rollbar(process.env.ROLLBAR_ACCESS_TOKEN);
+var Rollbar = require("rollbar");
+var rollbar = new Rollbar({
+  accessToken: process.env.ROLLBAR_ACCESS_TOKEN,
+  captureUncaught: true,
+  captureUnhandledRejections: true
+});
+
+rollbar.log("Initiated Rollbar 🎉");
 
 var childProcess = require('child_process');
 var guid = require('guid');

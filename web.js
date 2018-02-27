@@ -37,6 +37,7 @@ app.get('/', function(req, res){
 });
 
 app.post('/v1/render', function(request, response) {
+  console.log(request.body);
   if(process.env.SISU_RENDERER_ACCESS_TOKEN){
     if(!request.body.access_token || request.body.access_token != process.env.SISU_RENDERER_ACCESS_TOKEN){
       return response.status(401).json({ 'unauthorized': ' _|_ ' });

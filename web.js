@@ -30,6 +30,10 @@ var app = express();
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }))
+
+// support parsing of application/json type post data
+app.use(bodyParser.json());
+
 app.use(rollbar.errorHandler());
 
 app.get('/', function(req, res){

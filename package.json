@@ -10,7 +10,7 @@
     "guid": "0.0.10",
     "request": "<=2.81.0",
     "rimraf": "^2.6.2",
-    "rollbar": "^2.3.8"
+    "rollbar": "^2.3.9"
   },
   "engines": {
     "node": "0.10.3",

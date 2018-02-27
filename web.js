@@ -1,6 +1,10 @@
 require('dotenv').config({silent: true});
 
+// Express
 var express = require('express');
+var bodyParser = require('body-parser');
+
+// Sisu
 var sisuClient = require('./sisu_api/client');
 
 // Bug tracking
@@ -14,7 +18,6 @@ var rollbar = new Rollbar({
 rollbar.log("Initiated Rollbar 🎉");
 
 var childProcess = require('child_process');
-var guid = require('guid');
 var AWS = require('aws-sdk');
 var fs = require('fs');
 var apiRequest = require("request");
@@ -25,6 +28,10 @@ var file_types = ['jpg', 'png'];
 
 var app = express();
 
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(rollbar.errorHandler());
+
 app.get('/', function(req, res){
   res.send('<html><head><title>Screenshots!</title></head><body><h1>Screenshots!</h1><form action="/render" method="POST">URL: <input name="order_id" value="" placeholder="http://"><br>Size:<input name="size" value="" placeholder="1024px or 1024px*1000px"><br><input type="hidden" name="redirect" value="true"><input type="submit" value="Get Screenshot!"></form></body></html>');
 });
@@ -32,32 +39,38 @@ app.get('/', function(req, res){
 app.post('/v1/render', function(request, response) {
   if(process.env.SISU_RENDERER_ACCESS_TOKEN){
     if(!request.body.access_token || request.body.access_token != process.env.SISU_RENDERER_ACCESS_TOKEN){
-      return response.json(401, { 'unauthorized': ' _|_ ' });
+      return response.status(401).json({ 'unauthorized': ' _|_ ' });
     }
   }
 
   var file_type = request.body.file_type;
   if (file_types.indexOf(file_type) === -1){
-    return response.json(500, {
+    return response.status(500).json({
       'error': 'call /render/[file_type] where file_type is either jpg or png'
     });
   }
 
   if(!request.body.filename) {
-    return response.json(400, { 'error': 'You need to provide a filename.' });
+    return response.status(400).json({
+      'error': 'You need to provide a filename.'
+    });
   }
 
   if(!request.body.aws_directory) {
-    return response.json(400, { 'error': 'You need to provide an AWS location for the print.' });
+    return response.status(400).json({
+      'error': 'You need to provide an AWS location for the print.'
+    });
   }
 
   if(!request.body.order_id) {
-    return response.json(400, { 'error': 'You need to provide an order id.' });
+    return response.status(400).json({
+      'error': 'You need to provide an order id.'
+    });
   }
 
   // Respond as quickly as possible
   // to say we're handling this request
-  response.json(200, {
+  response.status(200).json({
     'status': "OK"
   });
 
@@ -80,7 +93,7 @@ app.post('/v1/render', function(request, response) {
         console.log(new Date().toISOString(), ": Error loading saved screenshot: " + err.message);
         rollbar.error(new Date().toISOString(), ": Error loading saved screenshot: " + err.message);
 
-        return response.json(500, {
+        return response.status(500).json({
           'error': 'Problem loading saved page.'
         });
       } else {
@@ -100,7 +113,7 @@ app.post('/v1/render', function(request, response) {
             console.log(new Date().toISOString(), ": Error uploading to s3: " + err.message);
             rollbar.error(new Date().toISOString(), ": Error uploading to s3: " + err.message);
 
-            return response.json(500, {
+            return response.status(500).json({
               'error': 'Problem uploading to S3.' + err.message
             });
           } else {
@@ -137,7 +150,7 @@ app.post('/v1/render', function(request, response) {
     console.log(new Date().toISOString(), "Error capturing page: " + error.message + "\n for address: " + childArgs[1]);
     rollbar.error(new Date().toISOString(), "Error capturing page: " + error.message + "\n for address: " + childArgs[1]);
 
-    return response.json(500, {
+    return response.status(500).json({
       'error': 'Problem capturing page.'
     });
   });
@@ -148,9 +161,6 @@ app.post('/v1/render', function(request, response) {
     uploadToS3();
   });
 });
-
-app.use(express.bodyParser());
-app.use(rollbar.errorHandler());
 
 var port = process.env.PORT || 8000;
 app.listen(port, function() {

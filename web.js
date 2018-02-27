@@ -25,10 +25,6 @@ var file_types = ['jpg', 'png'];
 
 var app = express();
 
-
-app.use(express.bodyParser());
-app.use(rollbar.errorHandler());
-
 app.get('/', function(req, res){
   res.send('<html><head><title>Screenshots!</title></head><body><h1>Screenshots!</h1><form action="/render" method="POST">URL: <input name="order_id" value="" placeholder="http://"><br>Size:<input name="size" value="" placeholder="1024px or 1024px*1000px"><br><input type="hidden" name="redirect" value="true"><input type="submit" value="Get Screenshot!"></form></body></html>');
 });
@@ -153,6 +149,8 @@ app.post('/v1/render', function(request, response) {
   });
 });
 
+app.use(express.bodyParser());
+app.use(rollbar.errorHandler());
 
 var port = process.env.PORT || 8000;
 app.listen(port, function() {

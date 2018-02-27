@@ -13,14 +13,14 @@
     "rollbar": "^2.3.9"
   },
   "engines": {
-    "node": "0.10.3",
+    "node": "6.6.0",
     "npm": "1.2.x"
   },
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": "",
+  "repository": "https://github.com/coolbox/heroku-phantomjs-to-s3",
   "author": "Peter Roome",
   "license": "BSD"
 }

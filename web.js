@@ -8,7 +8,7 @@ var bodyParser = require('body-parser');
 var sisuClient = require('./sisu_api/client');
 
 // Bug tracking
-var Rollbar = require("rollbar");
+var Rollbar = require('rollbar');
 var rollbar = new Rollbar({
   accessToken: process.env.ROLLBAR_ACCESS_TOKEN,
   captureUncaught: true,

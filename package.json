@@ -13,7 +13,7 @@
     "rollbar": "^2.3.9"
   },
   "engines": {
-    "node": "9.6.1",
+    "node": "8.x",
     "npm": "5.7.x"
   },
   "devDependencies": {},
@@ -22,5 +22,5 @@
   },
   "repository": "https://github.com/coolbox/heroku-phantomjs-to-s3",
   "author": "Peter Roome",
-  "license": "BSD"
+  "license": "UNLICENSED"
 }

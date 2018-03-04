@@ -2,6 +2,8 @@ var page = require('webpage').create(),
     system = require('system'),
     address, output, size, file_type;
 
+page.settings.userAgent = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:27.0) Gecko/20100101 Firefox/27.0'
+
 if (system.args.length < 3 || system.args.length > 5) {
   console.log('Usage: rasterize.js URL filename [paperwidth*paperheight|paperformat]');
   console.log('  image (png/jpg output) examples: "1920px" entire page, window width 1920px');

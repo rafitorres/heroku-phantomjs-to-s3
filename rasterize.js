@@ -49,6 +49,7 @@ if (system.args.length < 3 || system.args.length > 5) {
   }
 
   page.onConsoleMessage = function(msg, lineNum, sourceId) {
+    console.log(msg);
     if(msg == "Page loaded"){
       console.log(new Date().toISOString(), ": The page loaded.");
       renderAndExit();

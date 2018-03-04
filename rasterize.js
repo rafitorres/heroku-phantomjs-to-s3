@@ -2,6 +2,8 @@ var page = require('webpage').create(),
     system = require('system'),
     address, output, size, file_type;
 
+page.settings.userAgent = 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5';
+
 if (system.args.length < 3 || system.args.length > 5) {
   console.log('Usage: rasterize.js URL filename [paperwidth*paperheight|paperformat]');
   console.log('  image (png/jpg output) examples: "1920px" entire page, window width 1920px');
@@ -53,7 +55,11 @@ if (system.args.length < 3 || system.args.length > 5) {
     }
   };
 
-  page.open(address, function (status) {
+  var settings = {
+    encoding: "utf8"
+  }
+
+  page.open(address, settings, function (status) {
     if (status !== 'success') {
       console.log(address, ': Unable to load.');
       phantom.exit();

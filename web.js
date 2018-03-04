@@ -82,7 +82,7 @@ app.post('/v1/render', function(request, response) {
   var parent_dir = "./" + request.body.aws_directory.split("/")[0];
   var filenameFull = "./" + request.body.aws_directory + "/" + filename;
   console.log(new Date().toISOString(), ": Filename -> ", filenameFull);
-  var canvas_url = process.env.SISU_API_URL + "/render/prints/" + request.body.order_id;
+  var canvas_url = process.env.SISU_API_URL + "/render/prints/" + request.body.order_id + "?render_token=" + process.env.SISU_RENDER_TOKEN;
   var childArgs = [
     'rasterize.js',
     canvas_url,

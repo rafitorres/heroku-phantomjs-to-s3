@@ -35,17 +35,15 @@ if (system.args.length < 3 || system.args.length > 5) {
 
   var renderAndExit = function(){
     console.log(new Date().toISOString(), ": Rendering.");
-    setTimeout(function(){
-      page.render(output, {
-        format: file_type,
-        quality: '100'
-      });
-      // This releases the page memory
-      // Ensures garbage collection
-      // Docs: http://phantomjs.org/api/webpage/method/close.html
-      page.close();
-      phantom.exit();
-    }, 5000);
+    page.render(output, {
+      format: file_type,
+      quality: '100'
+    });
+    // This releases the page memory
+    // Ensures garbage collection
+    // Docs: http://phantomjs.org/api/webpage/method/close.html
+    page.close();
+    phantom.exit();
   }
 
   page.onConsoleMessage = function(msg, lineNum, sourceId) {

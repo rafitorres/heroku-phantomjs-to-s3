@@ -20,10 +20,9 @@ rollbar.log("Initiated Rollbar 🎉");
 var childProcess = require('child_process');
 var AWS = require('aws-sdk');
 var fs = require('fs');
-var apiRequest = require("request");
 var rimraf = require('rimraf');
-
 var s3 = new AWS.S3({region: process.env.AWS_REGION});
+
 var file_types = ['jpg', 'png'];
 
 var app = express();
@@ -83,17 +82,24 @@ app.post('/v1/render', function(request, response) {
   var filenameFull = "./" + request.body.aws_directory + "/" + filename;
   console.log(new Date().toISOString(), ": Filename -> ", filenameFull);
   var canvas_url = process.env.SISU_API_URL + "/render/prints/" + request.body.order_id + "?render_token=" + process.env.SISU_RENDER_TOKEN;
+  var orderObject = {
+    id: request.body.order_id,
+    filename: filename,
+    filenameFull: filenameFull,
+    awsDirectory: request.body.aws_directory,
+    redirect: request.body.redirect
+  };
   var childArgs = [
     'rasterize.js',
     canvas_url,
     filenameFull,
     request.body.size? request.body.size : '',
     request.body.file_type? request.body.file_type : 'jpg',
-    request.body.order_id
+    orderObject
   ];
 
-  var uploadToS3 = function(){
-    fs.readFile(filenameFull, function(err, temp_png_data){
+  var uploadToS3 = function(order){
+    fs.readFile(order.filenameFull, function(err, temp_png_data){
       if(err != null){
         console.log(new Date().toISOString(), ": Error loading saved screenshot: " + err.message);
         rollbar.error(new Date().toISOString(), ": Error loading saved screenshot: " + err.message);
@@ -102,18 +108,25 @@ app.post('/v1/render', function(request, response) {
           'error': 'Problem loading saved page.'
         });
       } else {
-        console.log(new Date().toISOString(), ": Uploading to s3 (#" + request.body.order_id + ")");
+        console.log(new Date().toISOString(), ": Uploading to s3 (#" + order.id + ")");
 
         upload_params = {
           Body: temp_png_data,
-          Key: request.body.aws_directory + "/" + filename,
+          Key: order.awsDirectory + "/" + order.filename,
           ACL: "public-read",
           Bucket: process.env.AWS_BUCKET_NAME
         };
 
+        // Post back
+        var s3Region = process.env.AWS_REGION? 's3-' + process.env.AWS_REGION : 's3'
+        var s3Url = 'https://' + process.env.AWS_BUCKET_NAME + '.' + s3Region + ".amazonaws.com/" + upload_params.Key;
+
+        sisuClient.sisuOrderPut(order.id, {
+          print_url: s3Url
+        });
+
         //start uploading
         s3.putObject(upload_params, function(err, s3_data) {
-          console.log(new Date().toISOString(), ": S3 (#" + request.body.order_id + "): ", err);
           if(err != null){
             console.log(new Date().toISOString(), ": Error uploading to s3: " + err.message);
             rollbar.error(new Date().toISOString(), ": Error uploading to s3: " + err.message);
@@ -123,24 +136,22 @@ app.post('/v1/render', function(request, response) {
             });
           } else {
             //clean up and respond
-            rimraf(parent_dir, function () {
-              console.log(new Date().toISOString(), ': Done');
-            });
+            rimraf(parent_dir);
 
-            var s3Region = process.env.AWS_REGION? 's3-' + process.env.AWS_REGION : 's3'
-            var s3Url = 'https://' + process.env.AWS_BUCKET_NAME + '.' + s3Region + ".amazonaws.com/" + upload_params.Key;
+            // var s3Region = process.env.AWS_REGION? 's3-' + process.env.AWS_REGION : 's3'
+            // var s3Url = 'https://' + process.env.AWS_BUCKET_NAME + '.' + s3Region + ".amazonaws.com/" + upload_params.Key;
 
             console.log(new Date().toISOString(), ": Uploaded to s3!");
-            console.log(new Date().toISOString(), ": URL => ", s3Url);
+            console.log(new Date().toISOString(), ": URL (#" + order.id + "): => ", s3Url);
 
             // Upload complete
-            if (request.body.redirect == 'true') {
+            if (order.redirect == 'true') {
               return response.redirect(302, s3Url);
             } else {
               // Send a request back to Sisu.
-              sisuClient.sisuOrderPut(request.body.order_id, {
-                print_url: s3Url
-              });
+              // sisuClient.sisuOrderPut(order.id, {
+              //   print_url: s3Url
+              // });
             }
           }
         });
@@ -164,8 +175,10 @@ app.post('/v1/render', function(request, response) {
 
   phantomProcess.on('exit', function(code) {
     console.log(new Date().toISOString(), ': Phantom process exited with code ' + code.toString())
-    //load the saved file
-    uploadToS3();
+    // Upload to S3
+    var order = this.spawnargs[this.spawnargs.length - 1]
+    // console.log("ARGS: ", order);
+    uploadToS3(order);
   });
 });
 

@@ -15,7 +15,8 @@ var apiRequest = require("request");
 function sisuOrderPut(order_id, params) {
   var api_url = process.env.SISU_API_URL + "/api/orders/" + order_id + ".json";
 
-  console.log(new Date().toISOString(), ": Posting to Sisu API.");
+  console.log("sisuOrderPut: ", order_id, params.print_url);
+  console.log(new Date().toISOString(), ": Posting to Sisu API (#" + order_id + " -  " + params.print_url + ")");
   apiRequest
     .put(api_url, {
       'auth': {

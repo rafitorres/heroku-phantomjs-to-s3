@@ -1,6 +1,6 @@
 var page = require('webpage').create(),
     system = require('system'),
-    address, output, size, file_type, order_id;
+    address, output, size, file_type, orderObject
 
 if (system.args.length < 3 || system.args.length > 6) {
   console.log('Usage: rasterize.js URL filename [paperwidth*paperheight|paperformat]');
@@ -8,11 +8,9 @@ if (system.args.length < 3 || system.args.length > 6) {
   console.log('                                   "800px*600px" window, clipped to 800x600');
   phantom.exit(1);
 } else {
-  console.log("Args: ", system.args);
   address = system.args[1];
   output = system.args[2];
   file_type = system.args[4];
-  order_id = system.args[5];
 
   console.log("Address: ", address);
   console.log("Output: ", output);
@@ -45,6 +43,7 @@ if (system.args.length < 3 || system.args.length > 6) {
     // Ensures garbage collection
     // Docs: http://phantomjs.org/api/webpage/method/close.html
     page.close();
+    console.log()
     phantom.exit(0);
   }
 

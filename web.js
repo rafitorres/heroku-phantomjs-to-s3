@@ -88,7 +88,8 @@ app.post('/v1/render', function(request, response) {
     canvas_url,
     filenameFull,
     request.body.size? request.body.size : '',
-    request.body.file_type? request.body.file_type : 'jpg'
+    request.body.file_type? request.body.file_type : 'jpg',
+    request.body.order_id
   ];
 
   var uploadToS3 = function(){
@@ -148,7 +149,9 @@ app.post('/v1/render', function(request, response) {
   }
 
   //grap the screen
-  var phantomProcess = childProcess.spawn('phantomjs', childArgs, { stdio: 'inherit' });
+  var phantomProcess = childProcess.spawn('phantomjs', childArgs, {
+    stdio: 'inherit'
+  });
 
   phantomProcess.on('error', function(code) {
     console.log(new Date().toISOString(), "Error capturing page: " + error.message + "\n for address: " + childArgs[1]);

@@ -1,16 +1,18 @@
 var page = require('webpage').create(),
     system = require('system'),
-    address, output, size, file_type;
+    address, output, size, file_type, order_id;
 
-if (system.args.length < 3 || system.args.length > 5) {
+if (system.args.length < 3 || system.args.length > 6) {
   console.log('Usage: rasterize.js URL filename [paperwidth*paperheight|paperformat]');
   console.log('  image (png/jpg output) examples: "1920px" entire page, window width 1920px');
   console.log('                                   "800px*600px" window, clipped to 800x600');
   phantom.exit(1);
 } else {
+  console.log("Args: ", system.args);
   address = system.args[1];
   output = system.args[2];
   file_type = system.args[4];
+  order_id = system.args[5];
 
   console.log("Address: ", address);
   console.log("Output: ", output);
@@ -43,7 +45,7 @@ if (system.args.length < 3 || system.args.length > 5) {
     // Ensures garbage collection
     // Docs: http://phantomjs.org/api/webpage/method/close.html
     page.close();
-    phantom.exit();
+    phantom.exit(0);
   }
 
   page.onConsoleMessage = function(msg, lineNum, sourceId) {
@@ -60,7 +62,7 @@ if (system.args.length < 3 || system.args.length > 5) {
   page.open(address, settings, function (status) {
     if (status !== 'success') {
       console.log(address, ': Unable to load.');
-      phantom.exit();
+      phantom.exit(1);
     }
   });
 }

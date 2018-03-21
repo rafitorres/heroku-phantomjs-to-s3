@@ -78,8 +78,8 @@ app.post('/v1/render', function(request, response) {
   });
 
   var filename = request.body.filename + "." + file_type;
-  var parent_dir = "./" + request.body.aws_directory.split("/")[0];
-  var filenameFull = "./" + request.body.aws_directory + "/" + filename;
+  var parent_dir = "./images/" + request.body.aws_directory.split("/")[0];
+  var filenameFull = "./images/" + request.body.aws_directory + "/" + filename;
   console.log(new Date().toISOString(), ": Filename -> ", filenameFull);
   var canvas_url = process.env.SISU_API_URL + "/render/prints/" + request.body.order_id + "?render_token=" + process.env.SISU_RENDER_TOKEN;
   var orderObject = {
@@ -139,8 +139,8 @@ app.post('/v1/render', function(request, response) {
             //clean up and respond
             rimraf(parent_dir);
 
-            // var s3Region = process.env.AWS_REGION? 's3-' + process.env.AWS_REGION : 's3'
-            // var s3Url = 'https://' + process.env.AWS_BUCKET_NAME + '.' + s3Region + ".amazonaws.com/" + upload_params.Key;
+            var s3Region = process.env.AWS_REGION? 's3-' + process.env.AWS_REGION : 's3'
+            var s3Url = 'https://' + process.env.AWS_BUCKET_NAME + '.' + s3Region + ".amazonaws.com/" + upload_params.Key;
 
             console.log(new Date().toISOString(), ": Uploaded to s3!");
             console.log(new Date().toISOString(), ": URL (#" + order.id + "): => ", s3Url);

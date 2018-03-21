@@ -99,6 +99,7 @@ app.post('/v1/render', function(request, response) {
   ];
 
   var uploadToS3 = function(order){
+    console.log("This one: ", order);
     fs.readFile(order.filenameFull, function(err, temp_png_data){
       if(err != null){
         console.log(new Date().toISOString(), ": Error loading saved screenshot: " + err.message);

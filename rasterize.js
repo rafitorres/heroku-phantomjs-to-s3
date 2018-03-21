@@ -12,9 +12,9 @@ if (system.args.length < 3 || system.args.length > 6) {
   output = system.args[2];
   file_type = system.args[4];
 
-  console.log("Address: ", address);
-  console.log("Output: ", output);
-  console.log("File type: ", file_type);
+  // console.log("Address: ", address);
+  // console.log("Output: ", output);
+  // console.log("File type: ", file_type);
 
   page.viewportSize = { width: 3508, height: 4961 };
 
@@ -30,7 +30,7 @@ if (system.args.length < 3 || system.args.length > 6) {
       pageHeight = parseInt(pageWidth * 3/4, 10); // it's as good an assumption as any
       page.viewportSize = { width: pageWidth, height: pageHeight };
     }
-    console.log("Viewport size: ", page.viewportSize.width, page.viewportSize.height);
+    // console.log("Viewport size: ", page.viewportSize.width, page.viewportSize.height);
   }
 
   var renderAndExit = function(){
@@ -49,7 +49,7 @@ if (system.args.length < 3 || system.args.length > 6) {
 
   page.onConsoleMessage = function(msg, lineNum, sourceId) {
     if(msg == "Page loaded"){
-      console.log(new Date().toISOString(), ": The page loaded.");
+      // console.log(new Date().toISOString(), ": The page loaded.");
       renderAndExit();
     }
   };

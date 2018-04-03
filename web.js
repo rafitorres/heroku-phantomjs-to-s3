@@ -1,4 +1,5 @@
 require('dotenv').config({silent: true});
+import timesLimit from 'async/timesLimit';
 
 // Express
 var express = require('express');
@@ -23,7 +24,7 @@ var fs = require('fs');
 var rimraf = require('rimraf');
 var s3 = new AWS.S3({region: process.env.AWS_REGION});
 
-var file_types = ['jpg', 'png'];
+var fileTypes = ['jpg', 'png'];
 
 var app = express();
 
@@ -46,10 +47,9 @@ app.post('/v1/render', function(request, response) {
     }
   }
 
-  var file_type = request.body.file_type;
-  if (file_types.indexOf(file_type) === -1){
+  if (fileTypes.indexOf(request.body.file_type) === -1){
     return response.status(500).json({
-      'error': 'call /render/[file_type] where file_type is either jpg or png'
+      'error': 'call /render/[fileType] where fileType is either jpg or png'
     });
   }
 
@@ -71,98 +71,26 @@ app.post('/v1/render', function(request, response) {
     });
   }
 
+  var renderRequest = {
+    orderId: request.body.order_id,
+    filename: request.body.filename,
+    fileType: request.body.file_type,
+    remoteDir: request.body.aws_directory
+  };
+  // return true if successful
+  var runPhantomJs = Crawler.startCrawler(renderRequest);
+  // response for the http request
+  var crawlAnswer;
+
+  if (runPhantomJs == true) {
+    crawlAnswer = "Start to make Screenshots of: " + websites;
+  } else {
+    crawlAnswer = "Phantom JS is too busy. :( Please try later";
+  }
   // Respond as quickly as possible
   // to say we're handling this request
   response.status(200).json({
-    'status': "OK"
-  });
-
-  var filename = request.body.filename + "." + file_type;
-  var parent_dir = "./images/" + request.body.aws_directory.split("/")[0];
-  var filenameFull = "./images/" + request.body.aws_directory + "/" + filename;
-  var canvas_url = process.env.SISU_API_URL + "/render/prints/" + request.body.order_id + "?render_token=" + process.env.SISU_RENDER_TOKEN;
-  var orderObject = {
-    id: request.body.order_id,
-    filename: filename,
-    filenameFull: filenameFull,
-    awsDirectory: request.body.aws_directory,
-    redirect: request.body.redirect
-  };
-  var childArgs = [
-    'rasterize.js',
-    canvas_url,
-    filenameFull,
-    request.body.size? request.body.size : '',
-    request.body.file_type? request.body.file_type : 'jpg',
-    orderObject
-  ];
-
-  //grap the screen
-  var phantomProcess = childProcess.spawn('phantomjs', childArgs, {
-    stdio: 'inherit'
-  });
-
-  phantomProcess.on('error', function(code) {
-    console.log(new Date().toISOString(), "Error capturing page: " + error.message + "\n for address: " + childArgs[1]);
-    rollbar.error(new Date().toISOString(), "Error capturing page: " + error.message + "\n for address: " + childArgs[1]);
-
-    return response.status(500).json({
-      'error': 'Problem capturing page.'
-    });
-  });
-
-  phantomProcess.on('exit', function(code) {
-    var uploadToS3 = function(order){
-      fs.readFile(order.filenameFull, function(err, temp_png_data){
-        if(err != null){
-          console.log(new Date().toISOString(), ": Error loading saved screenshot: " + err.message);
-          rollbar.error(new Date().toISOString(), ": Error loading saved screenshot: " + err.message);
-
-          return response.status(500).json({
-            'error': 'Problem loading saved page.'
-          });
-        } else {
-          upload_params = {
-            Body: temp_png_data,
-            Key: order.awsDirectory + "/" + order.filename,
-            ACL: "public-read",
-            Bucket: process.env.AWS_BUCKET_NAME
-          };
-
-          //start uploading
-          s3.putObject(upload_params, function(err, s3_data) {
-            if(err != null){
-              console.log(new Date().toISOString(), ": Error uploading to s3: " + err.message);
-              rollbar.error(new Date().toISOString(), ": Error uploading to s3: " + err.message);
-
-              return response.status(500).json({
-                'error': 'Problem uploading to S3.' + err.message
-              });
-            } else {
-              //clean up and respond
-              rimraf(parent_dir, function(){
-                console.log("Deleted the tmp files.")
-              });
-
-              var s3Url = 'https://' + process.env.AWS_BUCKET_NAME + '.' + s3.config.region + ".amazonaws.com/" + order.awsDirectory + "/" + order.filename;
-
-              // Upload complete
-              if (order.redirect == 'true') {
-                return response.redirect(302, s3Url);
-              } else {
-                // Send a request back to Sisu.
-                sisuClient.sisuOrderPut(order.id, {
-                  print_url: s3Url
-                });
-              }
-            }
-          });
-        }
-      });
-    }
-
-    var order = childArgs[5];
-    uploadToS3(order);
+    'status': crawlAnswer
   });
 });
 

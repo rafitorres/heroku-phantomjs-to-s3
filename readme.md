@@ -48,6 +48,12 @@ Buildpacks added:
     $ heroku buildpacks:add heroku/nodejs
     $ heroku buildpacks:add --index 1 https://github.com/stomita/heroku-buildpack-phantomjs
 
+
+## Run locally
+```javascript
+nodemon server.js
+```
+
 ### Versioning
 For a later date: [API versioning](http://j-query.blogspot.co.uk/2013/01/versioned-apis-with-express.html)
 

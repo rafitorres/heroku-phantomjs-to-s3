@@ -7,43 +7,42 @@ var maxInstances = 4; //change this to run more phantom instances in parallel
 var maxIterations = 20; // the max of websites to run through a phantom instance before creating a new one
 
 // Object for crawling websites
-function CrawlObject(phantomInstance, renderRequest) {
+function PrintObject(renderRequest, phantomInstance, crawlStatus) {
   var filename = renderRequest.filename + "." + renderRequest.fileType;
   var localDir = "./images/" + renderRequest.remoteDir.split("/")[0];
   var filenameAndDir = "./images/" + renderRequest.remoteDir + "/" + filename;
   var canvasUrl = process.env.SISU_API_URL + "/render/prints/" + renderRequest.orderId + "?render_token=" + process.env.SISU_RENDER_TOKEN;
 
   return {
-    printObject: {
-      filename: filename,
-      localDir: localDir,
-      filenameAndDir: filenameAndDir,
-      canvasUrl: canvasUrl
-    },
+    renderRequest: renderRequest,
+    filenameAndDir: filenameAndDir,
+    canvasUrl: canvasUrl,
     processId: phantomInstance.process.pid, // process id of the child process
+    crawlStatus: crawlStatus,
     phantomInstance: phantomInstance,
     viewportSize: {
       width: 3508,
       height: 4961
     }, // viewport of the phantom browser
     format: {
-      format: 'jpg'
+      format: renderRequest.fileType,
+      quality: '100'
     }, // format for the image
     timeOut: 5000 //Max time to wait for a website to load
   }
 }
 
 // create browser instance
-function initPhantom(renderRequest) {
+function initPhantom(renderRequest, crawlStatus) {
   //only allow 4 instances at once
   if (checkPhantomStatus() == true) {
     phantom.create(['--ignore-ssl-errors=no', '--load-images=true'], {logLevel: 'error'})
       .then(function (instance) {
-        console.log("===================> PhantomJs instance: ", instance.process.pid);
+        console.log("============> PhantomJs instance: ", instance.process.pid);
         // store the process id in an array
         phantomChildren.push(instance.process.pid);
-        var crawlObject = new CrawlObject(instance, renderRequest);
-        createWebsiteScreenshots(crawlObject);
+        var crawlObject = new PrintObject(renderRequest, instance, crawlStatus);
+        createPrintRender(crawlObject);
         return true;
       }).catch(function (e) {
       console.log('Error in initPhantom', e);
@@ -53,9 +52,8 @@ function initPhantom(renderRequest) {
 }
 
 // create a tab and make screenshot
-function createWebsiteScreenshots(crawl) {
-  var website = crawl.websites[crawl.index];
-  var user_folder = 'public/images/' + crawl.crawlStatus.user;
+function createPrintRender(crawl) {
+  var printCanvasUrl = crawl.canvasUrl
   var checkIterations = crawl.index >= maxIterations;
   var page;
 
@@ -70,50 +68,43 @@ function createWebsiteScreenshots(crawl) {
     //open page in a tab
     .then(function (tab) {
       page = tab;
-      page.property('viewportSize', crawl.viewportSize);
-      return page.open(website);
-    })
-    // get HTML content if you want to work with it
-    .then(function () {
-      // use a delay to make sure page is rendered properly
-      return delay(crawl.timeOut).then(function () {
-        return page.property('content');
-      })
-    })
-    //render website to png file
-    .then(function (content) {
-      console.log("render %s / %s", crawl.index + 1, crawl.websites.length, "processId:", crawl.processId);
-      var image = user_folder + "/" + new Date().toString() + "." + crawl.format.format;
-      return page.render(image, crawl.format);
-    })
-    // close tab and continue with loop
-    .then(function () {
-      page.close();
-      continuePhantomLoop(crawl);
+      page.viewportSize = crawl.viewportSize;
+      page.clipRect = {
+        top: 0,
+        left: 0,
+        width: crawl.viewportSize.width,
+        height: crawl.viewportSize.height
+      };
+      page.setting("resourceTimeout", crawl.resourceTimeout);
+
+      // Instead of running a timeOut, we just listen
+      // for a console message included on the website:
+      // "Page loaded"
+      // nb: could be deemed as flakey, but it's useful
+      page.on('onConsoleMessage', function(msg, lineNum, sourceId) {
+        // render website to png file
+        console.log("============> Console Msg: ", msg);
+        if(msg == "Page loaded"){
+          console.log(
+            "render %s / %s",
+            printCanvasUrl,
+            "processId:",
+            crawl.processId
+          );
+          page.render(crawl.filenameAndDir, crawl.format);
+
+          // This releases the page memory
+          // Ensures garbage collection
+          // Docs: http://phantomjs.org/api/webpage/method/close.html
+          page.close();
+        }
+      });
+
+      page.open(printCanvasUrl, {encoding: "utf8"});
     })
     .catch(function (e) {
       restartPhantom(crawl, e);
     });
-}
-
-// delay function which returns a promise
-function delay(t) {
-  return new Promise(function (resolve) {
-    setTimeout(resolve, t)
-  });
-}
-
-// check status and continue
-function continuePhantomLoop(crawl) {
-  //if there are still items left to crawl do it again
-  if (crawl.index < crawl.websites.length - 1) {
-    crawl.index += 1;
-    createWebsiteScreenshots(crawl);
-  } else {
-    console.log("===================> all done: %s files has been written", crawl.websites.length, "processId:", crawl.processId);
-    removeFromArray(crawl.processId);
-    crawl.phantomInstance.exit();
-  }
 }
 
 // restart if there is an error or we need a fresh phantom instance
@@ -127,10 +118,8 @@ function restartPhantom(crawl, e) {
       //
     }
   }
-
   removeFromArray(crawl.processId);
-  crawl.websites = crawl.websites.slice(crawl.index);
-  initPhantom(crawl.websites, crawl.crawlStatus);
+  initPhantom(crawl.renderRequest, crawl.crawlStatus);
 }
 
 // remove the processID from array
@@ -149,6 +138,6 @@ function checkPhantomStatus() {
 
 //export function for routes
 module.exports = {
-  startCrawler: initPhantom,
+  start: initPhantom,
   phantomChildren: phantomChildren
 };

@@ -9,14 +9,11 @@
 var apiRequest = require("request");
 
 // Bug tracking
-// var Rollbar = require('rollbar');
-// var rollbar = new Rollbar(process.env.ROLLBAR_ACCESS_TOKEN);
+var Rollbar = require('rollbar');
+var rollbar = new Rollbar(process.env.ROLLBAR_ACCESS_TOKEN);
 
 function sisuOrderPut(order_id, params) {
   var api_url = process.env.SISU_API_URL + "/api/orders/" + order_id + ".json";
-
-  console.log("sisuOrderPut: ", order_id, params.print_url);
-  console.log(new Date().toISOString(), ": Posting to Sisu API (#" + order_id + " -  " + params.print_url + ")");
   apiRequest
     .put(api_url, {
       'auth': {
@@ -24,15 +21,7 @@ function sisuOrderPut(order_id, params) {
       },
       form: params || {}
     })
-    .on('response', function(response) {
-      if(response.statusCode == 200){
-        console.log(new Date().toISOString(), ": Sisu API - Successful request");
-      } else {
-        rollbar.info(new Date().toISOString(), ": Sisu API: " + response.statusCode);
-      }
-    })
     .on('error', function(err) {
-      console.log(new Date().toISOString(), ": Sisu API - Error");
       rollbar.error(new Date().toISOString(), ": Error sending data to Sisu API: " + err.message);
     });
   return exports;

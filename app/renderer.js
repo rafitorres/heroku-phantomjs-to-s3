@@ -1,6 +1,10 @@
 // Requires
 var phantom = require('phantom');
 var fs = require('fs');
+
+// Custom Modules
+var Storage = require("../modules/storage");
+
 // global array of active phantom instances
 var phantomChildren = [];
 var maxInstances = 4; //change this to run more phantom instances in parallel
@@ -9,12 +13,16 @@ var maxIterations = 20; // the max of websites to run through a phantom instance
 // Object for crawling websites
 function PrintObject(renderRequest, phantomInstance, crawlStatus) {
   var filename = renderRequest.filename + "." + renderRequest.fileType;
-  var localDir = "./images/" + renderRequest.remoteDir.split("/")[0];
-  var filenameAndDir = "./images/" + renderRequest.remoteDir + "/" + filename;
+  var remoteDir = renderRequest.remoteDir;
+  var localDir = "./images/" + remoteDir.split("/")[0];
+  var filenameAndDir = "./images/" + remoteDir + "/" + filename;
   var canvasUrl = process.env.SISU_API_URL + "/render/prints/" + renderRequest.orderId + "?render_token=" + process.env.SISU_RENDER_TOKEN;
 
   return {
+    orderId: renderRequest.orderId,
     renderRequest: renderRequest,
+    filename: filename,
+    remoteDir: remoteDir,
     filenameAndDir: filenameAndDir,
     canvasUrl: canvasUrl,
     processId: phantomInstance.process.pid, // process id of the child process
@@ -24,10 +32,7 @@ function PrintObject(renderRequest, phantomInstance, crawlStatus) {
       width: 3508,
       height: 4961
     }, // viewport of the phantom browser
-    format: {
-      format: renderRequest.fileType,
-      quality: '100'
-    }, // format for the image
+    format: renderRequest.fileType, // format for the image
     timeOut: 5000 //Max time to wait for a website to load
   }
 }
@@ -80,7 +85,7 @@ function createPrintRender(crawl) {
       // Instead of running a timeOut, we just listen
       // for a console message included on the website:
       // "Page loaded"
-      // nb: could be deemed as flakey, but it's useful
+      // nb: could be deemed as flakey, but it's useful and works
       page.on('onConsoleMessage', function(msg, lineNum, sourceId) {
         // render website to png file
         console.log("============> Console Msg: ", msg);
@@ -91,7 +96,12 @@ function createPrintRender(crawl) {
             "processId:",
             crawl.processId
           );
-          page.render(crawl.filenameAndDir, crawl.format);
+
+          page.renderBase64(crawl.format)
+            .then(function(base64){
+              crawl.renderBase64 = base64;
+              Storage.upload(crawl);
+            });
 
           // This releases the page memory
           // Ensures garbage collection
@@ -101,6 +111,9 @@ function createPrintRender(crawl) {
       });
 
       page.open(printCanvasUrl, {encoding: "utf8"});
+    })
+    .then(function(){
+      removeFromArray(crawl.processId);
     })
     .catch(function (e) {
       restartPhantom(crawl, e);

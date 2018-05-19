@@ -107,13 +107,11 @@ function createPrintRender(crawl) {
           // Ensures garbage collection
           // Docs: http://phantomjs.org/api/webpage/method/close.html
           page.close();
+          removeFromArray(crawl.processId);
         }
       });
 
       page.open(printCanvasUrl, {encoding: "utf8"});
-    })
-    .then(function(){
-      removeFromArray(crawl.processId);
     })
     .catch(function (e) {
       restartPhantom(crawl, e);

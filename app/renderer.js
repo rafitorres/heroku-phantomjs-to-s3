@@ -4,6 +4,7 @@ var fs = require('fs');
 
 // Custom Modules
 var Storage = require("../modules/storage");
+var SisuClient = require("../modules/sisu_client");
 
 // global array of active phantom instances
 var phantomChildren = [];
@@ -100,7 +101,11 @@ function createPrintRender(crawl) {
           page.renderBase64(crawl.format)
             .then(function(base64){
               crawl.renderBase64 = base64;
-              Storage.upload(crawl);
+              var remotUrl = Storage.upload(crawl);
+
+              SisuClient.sisuOrderPut(crawl.orderId, {
+                print_url: remotUrl
+              });
             });
 
           // This releases the page memory
@@ -110,6 +115,10 @@ function createPrintRender(crawl) {
           removeFromArray(crawl.processId);
         }
       });
+
+      // page.on('onResourceError', function(resourceError) {
+      //   console.log("onResourceError: ", onResourceError);
+      // });
 
       page.open(printCanvasUrl, {encoding: "utf8"});
     })

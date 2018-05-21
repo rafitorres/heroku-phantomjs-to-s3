@@ -6,8 +6,10 @@
  * The only method here at the moment is a PUT for Orders which updates the
  * print_url of a specific order in the Sisu db.
  */
- var AWS = require('aws-sdk');
- var sisuClient = require("../modules/sisu_client");
+var AWS = require('aws-sdk');
+AWS.config.setPromisesDependency(require('bluebird'));
+
+var sisuClient = require("../modules/sisu_client");
 
 // Bug tracking
 var Rollbar = require('rollbar');
@@ -27,27 +29,14 @@ function upload(printObject) {
   };
 
   //start uploading
-    s3.putObject(upload_params, function(err, s3_data) {
-    if(err != null){
-      rollbar.error(new Date().toISOString(), ": Error uploading to s3: " + err.message);
-
-      return response.status(500).json({
-        'error': 'Problem uploading to S3.' + err.message
-      });
-    } else {
-      var s3Region = process.env.AWS_REGION? 's3-' + process.env.AWS_REGION : 's3'
-      var s3Url = 'https://' + process.env.AWS_BUCKET_NAME + '.' + s3Region + ".amazonaws.com/" + upload_params.Key;
-
-      console.log(new Date().toISOString(), ": Uploaded to s3!");
-      console.log(new Date().toISOString(), ": URL => ", s3Url);
-
-      // Send a request back to Sisu.
-      sisuClient.sisuOrderPut(printObject.orderId, {
-        print_url: s3Url
-      });
-    }
+  var putObjectPromise = s3.upload(upload_params).promise();
+  putObjectPromise.catch(function(err) {
+    rollbar.error(new Date().toISOString(), ": Error uploading to s3: " + err.message);
   });
-  return exports;
+
+  var s3Region = process.env.AWS_REGION? 's3-' + process.env.AWS_REGION : 's3'
+  var s3Url = 'https://' + process.env.AWS_BUCKET_NAME + '.' + s3Region + ".amazonaws.com/" + upload_params.Key;
+  return s3Url;
 }
 
 exports.upload = upload;

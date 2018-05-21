@@ -49,13 +49,14 @@ module.exports = function (app) {
       var renderAnswer;
 
       if (runPhantomJs == true) {
-        renderAnswer = "Starting to render print: " + renderRequest.orderId;
+        response.status(200).json({
+          'status': "Starting to render print: " + renderRequest.orderId
+        });
       } else {
-        renderAnswer = "Phantom JS is too busy. :( Please try later";
+        response.status(503).json({
+          'status': "Phantom JS is too busy. :( Please try later"
+        });
       }
-      response.status(200).json({
-        'status': renderAnswer
-      });
     });
 
     app.get("/api/v1/status", function (req, res) {

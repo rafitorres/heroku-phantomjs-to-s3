@@ -67,3 +67,8 @@ For a later date: [API versioning](http://j-query.blogspot.co.uk/2013/01/version
 ### TODO
 
 - Add format quality as param for API
+
+### Generate API tokens
+```ruby
+rand(36**19).to_s(36)
+```

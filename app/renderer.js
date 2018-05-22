@@ -8,7 +8,7 @@ var SisuClient = require("../modules/sisu_client");
 
 // global array of active phantom instances
 var phantomChildren = [];
-var maxInstances = 4; //change this to run more phantom instances in parallel
+var maxInstances = process.env.MAX_PHANTOM_INSTANCES || 4; //change this to run more phantom instances in parallel
 var maxIterations = 20; // the max of websites to run through a phantom instance before creating a new one
 
 // Object for crawling websites
@@ -60,15 +60,7 @@ function initPhantom(renderRequest, crawlStatus) {
 // create a tab and make screenshot
 function createPrintRender(crawl) {
   var printCanvasUrl = crawl.canvasUrl
-  var checkIterations = crawl.index >= maxIterations;
   var page;
-
-  // if a phantom instance is running for too long it tends to crash sometimes
-  // so start a fresh one
-  if (checkIterations) {
-    crawl.phantomInstance.exit();
-    return restartPhantom(crawl);
-  }
 
   crawl.phantomInstance.createPage()
     //open page in a tab

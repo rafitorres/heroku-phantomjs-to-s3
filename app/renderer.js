@@ -116,10 +116,6 @@ function createPrintRender(crawl) {
         }
       });
 
-      // page.on('onResourceError', function(resourceError) {
-      //   console.log("onResourceError: ", onResourceError);
-      // });
-
       page.open(printCanvasUrl, {encoding: "utf8"});
     })
     .catch(function (e) {

@@ -45,8 +45,6 @@ module.exports = function (app) {
 
       // return true if successful
       var runPhantomJs = Renderer.start(renderRequest);
-      // response for the http request
-      var renderAnswer;
 
       if (runPhantomJs == true) {
         response.status(200).json({

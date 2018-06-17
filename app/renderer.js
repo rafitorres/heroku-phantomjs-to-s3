@@ -83,7 +83,6 @@ function createPrintRender(crawl) {
       // "Page loaded"
       // nb: could be deemed as flakey, but it's useful and works
       page.on('onConsoleMessage', function(msg, lineNum, sourceId) {
-        console.log("onConsoleMessage");
         // render website to png file
         console.log("============> Console Msg: ", msg);
         if(msg == "Page loaded"){

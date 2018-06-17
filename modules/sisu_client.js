@@ -12,6 +12,22 @@ var apiRequest = require("request");
 var Rollbar = require('rollbar');
 var rollbar = new Rollbar(process.env.ROLLBAR_ACCESS_TOKEN);
 
+function apiUrl(orderId, typeOfRender){
+  // Fullsize: https://madewithsisu.com/render/prints/123?render_token=abc123
+  // Mockup: https://madewithsisu.com/render/prints/123/mockup?render_token=abc123
+  var url = process.env.SISU_API_URL;
+  url += "/render/prints/";
+  url += orderId;
+
+  if(typeOfRender === "mockup"){
+    url += "/mockup";
+  }
+
+  url += "?render_token=";
+  url += process.env.SISU_RENDER_TOKEN;
+  return url;
+}
+
 function sisuOrderPut(order_id, params) {
   var api_url = process.env.SISU_API_URL + "/api/orders/" + order_id + ".json";
   apiRequest
@@ -27,4 +43,5 @@ function sisuOrderPut(order_id, params) {
   return exports;
 }
 
+exports.apiUrl = apiUrl;
 exports.sisuOrderPut = sisuOrderPut;

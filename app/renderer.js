@@ -9,7 +9,6 @@ var SisuClient = require("../modules/sisu_client");
 // global array of active phantom instances
 var phantomChildren = [];
 var maxInstances = process.env.MAX_PHANTOM_INSTANCES || 4; //change this to run more phantom instances in parallel
-var maxIterations = 20; // the max of websites to run through a phantom instance before creating a new one
 
 // Object for crawling websites
 function PrintObject(renderRequest, phantomInstance, crawlStatus) {
@@ -17,9 +16,13 @@ function PrintObject(renderRequest, phantomInstance, crawlStatus) {
   var remoteDir = renderRequest.remoteDir;
   var localDir = "./images/" + remoteDir.split("/")[0];
   var filenameAndDir = "./images/" + remoteDir + "/" + filename;
-  var canvasUrl = process.env.SISU_API_URL + "/render/prints/" + renderRequest.orderId + "?render_token=" + process.env.SISU_RENDER_TOKEN;
+  var canvasUrl = SisuClient.apiUrl(
+    renderRequest.orderId,
+    renderRequest.typeOfrender
+  );
 
   return {
+    typeOfrender: renderRequest.typeOfrender,
     orderId: renderRequest.orderId,
     renderRequest: renderRequest,
     filename: filename,
@@ -30,8 +33,8 @@ function PrintObject(renderRequest, phantomInstance, crawlStatus) {
     crawlStatus: crawlStatus,
     phantomInstance: phantomInstance,
     viewportSize: {
-      width: 3508,
-      height: 4961
+      width: renderRequest.width,
+      height: renderRequest.height
     }, // viewport of the phantom browser
     format: renderRequest.fileType, // format for the image
     timeOut: 5000 //Max time to wait for a website to load
@@ -80,6 +83,7 @@ function createPrintRender(crawl) {
       // "Page loaded"
       // nb: could be deemed as flakey, but it's useful and works
       page.on('onConsoleMessage', function(msg, lineNum, sourceId) {
+        console.log("onConsoleMessage");
         // render website to png file
         console.log("============> Console Msg: ", msg);
         if(msg == "Page loaded"){

@@ -9,6 +9,7 @@ var SisuClient = require("../modules/sisu_client");
 // global array of active phantom instances
 var phantomChildren = [];
 var maxInstances = process.env.MAX_PHANTOM_INSTANCES || 4; //change this to run more phantom instances in parallel
+var maxIterations = 20; // the max of websites to run through a phantom instance before creating a new one
 
 // Object for crawling websites
 function PrintObject(renderRequest, phantomInstance, crawlStatus) {
@@ -16,19 +17,19 @@ function PrintObject(renderRequest, phantomInstance, crawlStatus) {
   var remoteDir = renderRequest.remoteDir;
   var localDir = "./images/" + remoteDir.split("/")[0];
   var filenameAndDir = "./images/" + remoteDir + "/" + filename;
-  var canvasUrl = SisuClient.apiUrl(
-    renderRequest.orderId,
-    renderRequest.typeOfrender
-  );
+  // var canvasUrl = process.env.SISU_API_URL + "/render/prints/" + renderRequest.orderId + "?render_token=" + process.env.SISU_RENDER_TOKEN;
 
   return {
-    typeOfrender: renderRequest.typeOfrender,
+    typeOfRender: renderRequest.typeOfRender,
     orderId: renderRequest.orderId,
     renderRequest: renderRequest,
     filename: filename,
     remoteDir: remoteDir,
     filenameAndDir: filenameAndDir,
-    canvasUrl: canvasUrl,
+    canvasUrl: SisuClient.apiUrl(
+      renderRequest.orderId,
+      renderRequest.typeOfRender
+    ),
     processId: phantomInstance.process.pid, // process id of the child process
     crawlStatus: crawlStatus,
     phantomInstance: phantomInstance,
@@ -111,6 +112,19 @@ function createPrintRender(crawl) {
         }
       });
 
+      page.on('onError', function(msg, trace) {
+        console.log("Error: ", msg, trace);
+      });
+
+      page.on('onLoadFinished', function(status) {
+        console.log("Load finished: ", status);
+      });
+
+      page.on('onResourceError', function(error) {
+        console.log("onResourceError: ", error);
+      });
+
+      console.log(printCanvasUrl);
       page.open(printCanvasUrl, {encoding: "utf8"});
     })
     .catch(function (e) {

@@ -61,7 +61,7 @@ module.exports = function (app) {
       }
 
       var renderRequest = {
-        typeOfrender: request.body.type_of_render,
+        typeOfRender: request.body.type_of_render,
         orderId: request.body.order_id,
         width: request.body.width,
         height: request.body.height,

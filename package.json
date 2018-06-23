@@ -1,22 +1,30 @@
 {
-  "name": "heroku-phantomjs-to-s3",
+  "name": "sis-renderer",
   "version": "0.0.2",
   "description": "Web Service to render webpage screenshots",
   "main": "web.js",
   "dependencies": {
-    "express": "3.1.1",
-    "guid": "0.0.10",
-    "aws-sdk": "2.1.6"
+    "async": "^2.6.0",
+    "aws-sdk": "^2.244.1",
+    "bluebird": "^3.5.1",
+    "body-parser": "^1.18.2",
+    "dotenv": "^2.0.0",
+    "express": "4.16.2",
+    "morgan": "~1.9.0",
+    "phantom": "4.0.12",
+    "request": "<=2.81.0",
+    "rimraf": "^2.6.2",
+    "rollbar": "^2.3.9"
   },
   "engines": {
-    "node": "0.10.3",
-    "npm": "1.2.x"
+    "node": "9.6.x",
+    "npm": "5.7.x"
   },
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": "",
-  "author": "Rafael Torres",
-  "license": "BSD"
+  "repository": "https://github.com/coolbox/sisu-renderer",
+  "author": "Peter Roome",
+  "license": "UNLICENSED"
 }

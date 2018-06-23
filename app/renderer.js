@@ -99,9 +99,16 @@ function createPrintRender(crawl) {
               crawl.renderBase64 = base64;
               var remotUrl = Storage.upload(crawl);
 
-              SisuClient.sisuOrderPut(crawl.orderId, {
-                print_url: remotUrl
-              });
+              // Set the param name based on
+              // the type of render.
+              var params = {};
+              if(crawl.typeOfRender === "mockup"){
+                params["mockup_url"] = remotUrl;
+              } else {
+                params["print_url"] = remotUrl;
+              }
+
+              SisuClient.sisuOrderPut(crawl.orderId, params);
             });
 
           // This releases the page memory
